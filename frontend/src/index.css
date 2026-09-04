@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-sand-50 text-lagoon-900 font-body antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display text-lagoon-900;
+  }
+  :focus-visible {
+    outline: 2px solid theme('colors.lagoon.500');
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-lagoon-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-lagoon-700 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-lagoon-200 bg-white px-6 py-3 text-sm font-semibold text-lagoon-700 transition hover:bg-lagoon-50 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-amber {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-amber-500 px-6 py-3 text-sm font-semibold text-white shadow-soft transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .input-field {
+    @apply w-full rounded-xl border border-sand-200 bg-white px-4 py-2.5 text-sm text-lagoon-900 placeholder:text-lagoon-400/70 focus:border-lagoon-400 focus:outline-none focus:ring-2 focus:ring-lagoon-200;
+  }
+  .field-error {
+    @apply mt-1 text-xs font-medium text-rose-600;
+  }
+  .card {
+    @apply rounded-xl2 bg-white shadow-card;
+  }
+  .section-label {
+    @apply text-sm font-semibold uppercase tracking-wide text-lagoon-500;
+  }
+}
