@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ImagePlus } from 'lucide-react';
+import { ImagePlus, Plus, Trash2 } from 'lucide-react';
 import Modal from '../common/Modal.jsx';
 import { tourFormSchema } from '../../utils/validationSchemas.js';
 import { CATEGORIES } from '../../data/mockData.js';
@@ -16,6 +16,7 @@ const EMPTY_VALUES = {
   availableSlots: '',
   summary: '',
   heroImage: '',
+  departures: [{ date: '', maxTravelers: '' }],
 };
 
 export default function TourFormModal({ isOpen, onClose, onSubmit, initialTour, submitting }) {
@@ -27,9 +28,15 @@ export default function TourFormModal({ isOpen, onClose, onSubmit, initialTour, 
     reset,
     watch,
     formState: { errors },
+    control,
   } = useForm({
     resolver: zodResolver(tourFormSchema),
     defaultValues: EMPTY_VALUES,
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'departures',
   });
 
   const heroImageValue = watch('heroImage');
@@ -48,6 +55,12 @@ export default function TourFormModal({ isOpen, onClose, onSubmit, initialTour, 
               availableSlots: initialTour.availableSlots,
               summary: initialTour.summary,
               heroImage: initialTour.heroImage,
+              departures: initialTour.departures && initialTour.departures.length > 0
+                ? initialTour.departures.map((d) => ({
+                    date: d.date ? new Date(d.date).toISOString().split('T')[0] : '',
+                    maxTravelers: d.maxTravelers || '',
+                  }))
+                : [{ date: '', maxTravelers: '' }],
             }
           : EMPTY_VALUES
       );
@@ -76,6 +89,10 @@ export default function TourFormModal({ isOpen, onClose, onSubmit, initialTour, 
       maxTravelers: Number(values.maxTravelers),
       availableSlots: Number(values.availableSlots),
       heroImage: preview || values.heroImage,
+      departures: values.departures.map((d) => ({
+        date: new Date(d.date).toISOString(),
+        maxTravelers: Number(d.maxTravelers),
+      })),
     });
   };
 
@@ -133,6 +150,54 @@ export default function TourFormModal({ isOpen, onClose, onSubmit, initialTour, 
             <label className="mb-1.5 block text-sm font-medium text-lagoon-700">Summary</label>
             <textarea rows={3} className="input-field resize-none" {...register('summary')} />
             {errors.summary && <p className="field-error">{errors.summary.message}</p>}
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className="mb-1.5 block text-sm font-medium text-lagoon-700">Departure Dates (for group travel)</label>
+            {errors.departures && <p className="field-error mb-2">{errors.departures.message}</p>}
+            <div className="space-y-3">
+              {fields.map((field, index) => (
+                <div key={field.id} className="flex gap-3">
+                  <div className="flex-1">
+                    <input
+                      type="date"
+                      className="input-field"
+                      {...register(`departures.${index}.date`)}
+                    />
+                    {errors.departures?.[index]?.date && (
+                      <p className="field-error text-xs">{errors.departures[index].date.message}</p>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      placeholder="Max travelers"
+                      className="input-field"
+                      {...register(`departures.${index}.maxTravelers`, { valueAsNumber: true })}
+                    />
+                    {errors.departures?.[index]?.maxTravelers && (
+                      <p className="field-error text-xs">{errors.departures[index].maxTravelers.message}</p>
+                    )}
+                  </div>
+                  {fields.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => remove(index)}
+                      className="mt-0.5 rounded-lg bg-red-50 p-2.5 text-red-600 hover:bg-red-100 transition"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => append({ date: '', maxTravelers: '' })}
+                className="inline-flex items-center gap-2 rounded-lg border border-lagoon-300 px-3 py-2 text-sm font-medium text-lagoon-600 hover:bg-lagoon-50 transition"
+              >
+                <Plus size={16} /> Add Departure
+              </button>
+            </div>
           </div>
 
           <div className="sm:col-span-2">

@@ -44,7 +44,7 @@ export default function Home() {
             Plan less. Wander more.
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-base text-sand-100/90 sm:text-lg">
-            Handpicked tours across India's mountains, coastlines, and cities — booked in minutes, remembered for years.
+            Handpicked tours across India&apos;s mountains, coastlines, and cities — booked in minutes, remembered for years.
           </p>
 
           <form

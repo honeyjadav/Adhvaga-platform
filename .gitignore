@@ -9,3 +9,4 @@ npm-debug.log*
 .DS_Store
 .vite/
 .vscode/
+backend/utils/seed.js
