@@ -51,6 +51,10 @@ export const tourFormSchema = z.object({
   availableSlots: z.number({ invalid_type_error: 'Required' }).min(0, 'Cannot be negative'),
   summary: z.string().min(10, 'Summary must be at least 10 characters'),
   heroImage: z.string().url('Provide a valid image URL').optional().or(z.literal('')),
+  departures: z.array(z.object({
+    date: z.string().min(1, 'Departure date is required'),
+    maxTravelers: z.number({ invalid_type_error: 'Max travelers is required' }).positive('Must be at least 1'),
+  })).min(1, 'At least one departure date is required'),
 });
 
 export const profileSchema = z.object({

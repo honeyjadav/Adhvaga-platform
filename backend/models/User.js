@@ -1,76 +1,109 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Name is required'],
+      required: [true, "Name is required"],
       trim: true,
-      minlength: [2, 'Name must be at least 2 characters'],
-      maxlength: [60, 'Name cannot exceed 60 characters'],
+      minlength: [2, "Name must be at least 2 characters"],
+      maxlength: [60, "Name cannot exceed 60 characters"],
     },
     email: {
       type: String,
-      required: [true, 'Email is required'],
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
+      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address"],
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
+      required: [true, "Password is required"],
+      minlength: [6, "Password must be at least 6 characters"],
       select: false, // never return password by default
     },
     phone: {
       type: String,
       trim: true,
-      default: '',
+      default: "",
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user',
+      enum: ["user", "admin"],
+      default: "user",
     },
     avatarInitials: {
       type: String,
-      default: '',
+      default: "",
     },
     wishlist: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Tour',
+        ref: "Tour",
       },
     ],
+    passwordResetToken: {
+      type: String,
+      select: false,
+    },
+    passwordResetExpires: {
+      type: Date,
+      select: false,
+    },
     isActive: {
       type: Boolean,
       default: true,
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: true,
+    },
+    emailVerificationToken: {
+      type: String,
+      select: false,
+    },
+    emailVerificationExpires: {
+      type: Date,
+      select: false,
+    },
+    loginOtpHash: {
+      type: String,
+      select: false,
+    },
+    loginOtpExpires: {
+      type: Date,
+      select: false,
+    },
+    loginOtpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
     },
     lastLoginAt: {
       type: Date,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Derive initials automatically before saving (e.g. "Priya Shah" -> "PS")
-userSchema.pre('save', function (next) {
-  if (this.isModified('name') || !this.avatarInitials) {
+userSchema.pre("save", function (next) {
+  if (this.isModified("name") || !this.avatarInitials) {
     const parts = this.name.trim().split(/\s+/);
     const initials = parts
       .slice(0, 2)
       .map((p) => p[0]?.toUpperCase())
-      .join('');
-    this.avatarInitials = initials || 'U';
+      .join("");
+    this.avatarInitials = initials || "U";
   }
   next();
 });
 
 // Hash password before saving, only if it was modified
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
@@ -92,8 +125,9 @@ userSchema.methods.toSafeObject = function () {
     avatarInitials: this.avatarInitials,
     wishlist: this.wishlist,
     isActive: this.isActive,
+    isEmailVerified: this.isEmailVerified,
     createdAt: this.createdAt,
   };
 };
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

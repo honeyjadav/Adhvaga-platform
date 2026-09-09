@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
 import { CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
-import StripeCardForm from '../components/payment/StripeCardForm.jsx';
+import RazorpayCheckout from '../components/payment/RazorpayCheckout.jsx';
 import BookingSummary from '../components/booking/BookingSummary.jsx';
 import LoadingSpinner from '../components/common/LoadingSpinner.jsx';
 import ErrorState from '../components/common/ErrorState.jsx';
@@ -15,10 +13,6 @@ import { useAuth } from '../hooks/useAuth.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { formatCurrency } from '../utils/formatters.js';
 
-const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder'
-);
-
 export default function Payment() {
   const { id } = useParams();
   const location = useLocation();
@@ -29,7 +23,7 @@ export default function Payment() {
   const bookingDetails = location.state;
   const { data: tour, isLoading, error, reload } = useFetch(() => getTourById(id), [id]);
 
-  const [clientSecret, setClientSecret] = useState(null);
+  const [paymentOrder, setPaymentOrder] = useState(null);
   const [paymentState, setPaymentState] = useState('idle'); // idle | processing | success | failed
   const [failureReason, setFailureReason] = useState('');
   const [confirmedBooking, setConfirmedBooking] = useState(null);
@@ -44,7 +38,7 @@ export default function Payment() {
   useEffect(() => {
     if (!tour || !bookingDetails) return;
     createPaymentIntent({ amount: total, bookingId: `${tour.id}-${Date.now()}` })
-      .then((res) => setClientSecret(res.clientSecret))
+      .then(setPaymentOrder)
       .catch((err) => toastError(err.message || 'Could not initialize payment.'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tour, total]);
@@ -74,7 +68,7 @@ export default function Payment() {
         startDate: bookingDetails.startDate,
         totalPrice: total,
       });
-      await confirmPayment({ bookingId: booking.id, paymentIntentId: paymentIntent.id });
+      await confirmPayment({ bookingId: booking.id, paymentIntentId: paymentIntent });
       setConfirmedBooking(booking);
       setPaymentState('success');
       toastSuccess('Payment successful! Your trip is booked.');
@@ -136,19 +130,18 @@ export default function Payment() {
       </button>
       <p className="section-label">Step 2 of 2</p>
       <h1 className="mt-1 font-display text-3xl font-semibold">Payment</h1>
-      <p className="mt-2 text-sm text-lagoon-500">Enter your card details to confirm your booking.</p>
+      <p className="mt-2 text-sm text-lagoon-500">Complete your booking securely with Razorpay.</p>
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          {clientSecret ? (
-            <Elements stripe={stripePromise}>
-              <StripeCardForm
-                clientSecret={clientSecret}
-                onSuccess={handlePaymentSuccess}
-                onError={handlePaymentError}
-                isProcessingExternally={paymentState === 'processing'}
-              />
-            </Elements>
+          {paymentOrder ? (
+            <RazorpayCheckout
+              order={paymentOrder}
+              bookingDetails={bookingDetails}
+              onSuccess={handlePaymentSuccess}
+              onError={handlePaymentError}
+              isProcessingExternally={paymentState === 'processing'}
+            />
           ) : (
             <LoadingSpinner label="Initializing secure payment..." />
           )}

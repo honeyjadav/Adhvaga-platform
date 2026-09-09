@@ -24,10 +24,6 @@ const registerValidation = [
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters'),
   body('phone').optional({ checkFalsy: true }).isString().trim(),
-  body('role')
-    .optional()
-    .isIn(['user', 'admin'])
-    .withMessage('Role must be either "user" or "admin"'),
   validate,
 ];
 
@@ -51,9 +47,37 @@ const changePasswordValidation = [
   validate,
 ];
 
+const forgotPasswordValidation = [
+  body('email').trim().isEmail().withMessage('A valid email is required').normalizeEmail(),
+  validate,
+];
+
+const resetPasswordValidation = [
+  body('token').notEmpty().withMessage('Reset token is required'),
+  body('newPassword')
+    .isLength({ min: 6 })
+    .withMessage('New password must be at least 6 characters'),
+  validate,
+];
+
+const otpRequestValidation = [
+  body('email').trim().isEmail().withMessage('A valid email is required').normalizeEmail(),
+  validate,
+];
+
+const otpVerificationValidation = [
+  body('email').trim().isEmail().withMessage('A valid email is required').normalizeEmail(),
+  body('otp').trim().isLength({ min: 6, max: 6 }).isNumeric().withMessage('OTP must be 6 digits'),
+  validate,
+];
+
 module.exports = {
   registerValidation,
   loginValidation,
   updateProfileValidation,
   changePasswordValidation,
+  forgotPasswordValidation,
+  resetPasswordValidation,
+  otpRequestValidation,
+  otpVerificationValidation,
 };

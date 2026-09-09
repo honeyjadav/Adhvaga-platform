@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDispatch } from 'react-redux';
 import { Compass, Mail, Lock, User as UserIcon } from 'lucide-react';
@@ -15,19 +15,17 @@ export default function Register() {
 
   const {
     register,
-    control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: 'user' },
   });
 
   const onSubmit = async (values) => {
     try {
       await dispatch(registerUser(values)).unwrap();
-      success('Account created — welcome to Adhvaga!');
-      navigate('/dashboard', { replace: true });
+      success('Account created. Check your email to verify it, then log in.');
+      navigate('/login', { replace: true });
     } catch (err) {
       toastError(typeof err === 'string' ? err : 'Registration failed. Please try again.');
     }
@@ -79,32 +77,6 @@ export default function Register() {
             </div>
             {errors.confirmPassword && <p className="field-error">{errors.confirmPassword.message}</p>}
           </div>
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium text-lagoon-700">Account type</label>
-          <Controller
-            name="role"
-            control={control}
-            render={({ field }) => (
-              <div className="grid grid-cols-2 gap-3">
-                {['user', 'admin'].map((role) => (
-                  <button
-                    type="button"
-                    key={role}
-                    onClick={() => field.onChange(role)}
-                    className={`rounded-xl border px-4 py-2.5 text-sm font-semibold capitalize transition ${
-                      field.value === role
-                        ? 'border-lagoon-600 bg-lagoon-600 text-white'
-                        : 'border-sand-200 text-lagoon-600 hover:border-lagoon-300'
-                    }`}
-                  >
-                    {role === 'user' ? 'Traveler' : 'Admin'}
-                  </button>
-                ))}
-              </div>
-            )}
-          />
         </div>
 
         <button type="submit" disabled={isSubmitting} className="btn-primary w-full">

@@ -6,6 +6,10 @@ const cookieParser = require('cookie-parser');
 
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const tourRoutes = require('./routes/tourRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '1.1.1.1']);
@@ -34,11 +38,10 @@ app.get('/api/health', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
-// Next up (not yet built): tours, bookings, payments, reviews
-// app.use('/api/tours', require('./routes/tourRoutes'));
-// app.use('/api/bookings', require('./routes/bookingRoutes'));
-// app.use('/api/payments', require('./routes/paymentRoutes'));
-// app.use('/api/reviews', require('./routes/reviewRoutes'));
+app.use('/api/tours', tourRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // 404 + error handling (must be last)
 app.use(notFound);

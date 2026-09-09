@@ -53,7 +53,7 @@ export default function Booking() {
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <p className="section-label">Step 1 of 2</p>
       <h1 className="mt-1 font-display text-3xl font-semibold">Booking Details</h1>
-      <p className="mt-2 text-sm text-lagoon-500">Tell us who's traveling and when — we'll take care of the rest.</p>
+      <p className="mt-2 text-sm text-lagoon-500">Tell us who&apos;s traveling and when — we&apos;ll take care of the rest.</p>
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
         <form onSubmit={handleSubmit(onSubmit)} className="card space-y-6 p-6 lg:col-span-2">

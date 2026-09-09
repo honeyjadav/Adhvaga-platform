@@ -10,7 +10,11 @@ import TourDetail from './pages/TourDetail.jsx';
 import Booking from './pages/Booking.jsx';
 import Payment from './pages/Payment.jsx';
 import Login from './pages/Login.jsx';
+import OtpLogin from './pages/OtpLogin.jsx';
 import Register from './pages/Register.jsx';
+import VerifyEmail from './pages/VerifyEmail.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 import UserDashboard from './pages/UserDashboard.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import ReviewsPage from './pages/ReviewsPage.jsx';
@@ -28,7 +32,11 @@ export default function App() {
           <Route path="/reviews" element={<ReviewsPage />} />
 
           <Route path="/login" element={<Login />} />
+          <Route path="/login/otp" element={<OtpLogin />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify-email/:token" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           <Route
             path="/booking/:id"
