@@ -5,8 +5,7 @@ export async function createPaymentIntent({ amount, currency = 'inr', bookingId 
   return data;
 }
 
-export async function confirmPayment({ bookingId, paymentIntentId }) {
-  const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = paymentIntentId;
+export async function confirmPayment({ bookingId, razorpayOrderId, razorpayPaymentId, razorpaySignature }) {
   const { data } = await APICallService.confirmPayment({
     bookingId,
     razorpayOrderId,

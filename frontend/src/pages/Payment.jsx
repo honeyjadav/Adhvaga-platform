@@ -57,26 +57,33 @@ export default function Payment() {
   if (error) return <div className="mx-auto max-w-3xl px-4 py-16"><ErrorState message={error} onRetry={reload} /></div>;
   if (!tour) return null;
 
-  const handlePaymentSuccess = async (paymentIntent) => {
-    setPaymentState('processing');
-    try {
-      const booking = await createBooking({
-        tourId: tour.id,
-        tourTitle: tour.title,
-        userId: user?.id || 'guest',
-        travelers,
-        startDate: bookingDetails.startDate,
-        totalPrice: total,
-      });
-      await confirmPayment({ bookingId: booking.id, paymentIntentId: paymentIntent });
-      setConfirmedBooking(booking);
-      setPaymentState('success');
-      toastSuccess('Payment successful! Your trip is booked.');
-    } catch (err) {
-      setFailureReason(err.message || 'Payment could not be confirmed.');
-      setPaymentState('failed');
-    }
-  };
+ const handlePaymentSuccess = async (razorpayResponse) => {
+  setPaymentState('processing');
+  try {
+    const booking = await createBooking({
+  tourId: tour.id,
+  tourTitle: tour.title,
+  userId: user?.id || 'guest',
+  travelers,
+  totalPrice: total,
+  ...(bookingDetails.bookingType === 'flexible'
+    ? { date: bookingDetails.date }
+    : { departureId: bookingDetails.departureId }),
+});
+    await confirmPayment({
+      bookingId: booking.id,
+      razorpayOrderId: razorpayResponse.razorpay_order_id,
+      razorpayPaymentId: razorpayResponse.razorpay_payment_id,
+      razorpaySignature: razorpayResponse.razorpay_signature,
+    });
+    setConfirmedBooking(booking);
+    setPaymentState('success');
+    toastSuccess('Payment successful! Your trip is booked.');
+  } catch (err) {
+    setFailureReason(err.message || 'Payment could not be confirmed.');
+    setPaymentState('failed');
+  }
+};
 
   const handlePaymentError = (message) => {
     setFailureReason(message);
@@ -147,7 +154,7 @@ export default function Payment() {
           )}
         </div>
         <div className="lg:col-span-1">
-          <BookingSummary tour={tour} travelers={travelers} startDate={bookingDetails.startDate} />
+          <BookingSummary tour={tour} travelers={travelers} startDate={bookingDetails.date} />
         </div>
       </div>
     </div>
