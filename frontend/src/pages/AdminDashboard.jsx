@@ -19,7 +19,7 @@ import { useFetch } from '../hooks/useFetch.js';
 import { useToast } from '../context/ToastContext.jsx';
 import * as toursService from '../services/tours.js';
 import * as bookingsService from '../services/bookings.js';
-import { ANALYTICS } from '../data/mockData.js';
+import { getDashboardStats } from '../services/admin.js';
 import { formatCurrency, formatDate, STATUS_BADGE_STYLES, capitalize } from '../utils/formatters.js';
 
 export default function AdminDashboard() {
@@ -45,21 +45,28 @@ export default function AdminDashboard() {
 }
 
 function OverviewTab() {
+  const { data: stats, isLoading, error, reload } = useFetch(() => getDashboardStats(), []);
+
+  if (isLoading) return <LoadingSpinner fullPage label="Loading dashboard stats..." />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (!stats) return null;
+
+  const maxRevenue = Math.max(...stats.monthlyRevenue.map((x) => x.revenue), 1); // avoid /0
+
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        <StatsCard icon={IndianRupee} label="Total Revenue" value={formatCurrency(ANALYTICS.totalRevenue)} accent="lagoon" />
-        <StatsCard icon={CalendarCheck} label="Total Bookings" value={ANALYTICS.totalBookings} accent="sky" />
-        <StatsCard icon={Map} label="Active Tours" value={ANALYTICS.totalTours} accent="amber" />
-        <StatsCard icon={Users} label="Registered Users" value={ANALYTICS.totalUsers} accent="lagoon" />
+        <StatsCard icon={IndianRupee} label="Total Revenue" value={formatCurrency(stats.totalRevenue)} accent="lagoon" />
+        <StatsCard icon={CalendarCheck} label="Total Bookings" value={stats.totalBookings} accent="sky" />
+        <StatsCard icon={Map} label="Active Tours" value={stats.totalTours} accent="amber" />
+        <StatsCard icon={Users} label="Registered Users" value={stats.totalUsers} accent="lagoon" />
       </div>
 
       <div className="card p-6">
         <h3 className="mb-5 font-display text-lg font-semibold text-lagoon-900">Revenue, last 6 months</h3>
         <div className="flex h-48 items-end gap-4">
-          {ANALYTICS.monthlyRevenue.map((m) => {
-            const max = Math.max(...ANALYTICS.monthlyRevenue.map((x) => x.revenue));
-            const heightPct = (m.revenue / max) * 100;
+          {stats.monthlyRevenue.map((m) => {
+            const heightPct = (m.revenue / maxRevenue) * 100;
             return (
               <div key={m.month} className="flex flex-1 flex-col items-center gap-2">
                 <div className="flex h-40 w-full items-end">
@@ -132,6 +139,16 @@ function ToursTab() {
     }
   };
 
+  // Renders capacity info differently depending on how the tour is booked.
+  const renderCapacity = (tour) => {
+    if (tour.bookingType === 'flexible') {
+      return `${tour.dailyCapacity}/day`;
+    }
+    const totalSlots = (tour.departures || []).reduce((sum, d) => sum + (d.availableSlots || 0), 0);
+    const totalMax = (tour.departures || []).reduce((sum, d) => sum + (d.maxTravelers || 0), 0);
+    return `${totalSlots}/${totalMax}`;
+  };
+
   if (isLoading) return <LoadingSpinner fullPage label="Loading tour packages..." />;
   if (error) return <ErrorState message={error} onRetry={reload} />;
 
@@ -159,7 +176,8 @@ function ToursTab() {
               <th className="px-5 py-3">Tour</th>
               <th className="px-5 py-3">Category</th>
               <th className="px-5 py-3">Price</th>
-              <th className="px-5 py-3">Slots</th>
+              <th className="px-5 py-3">Booking Type</th>
+              <th className="px-5 py-3">Capacity</th>
               <th className="px-5 py-3">Rating</th>
               <th className="px-5 py-3 text-right">Actions</th>
             </tr>
@@ -173,7 +191,14 @@ function ToursTab() {
                 </td>
                 <td className="px-5 py-3 text-lagoon-600">{tour.category}</td>
                 <td className="px-5 py-3 text-lagoon-600">{formatCurrency(tour.price)}</td>
-                <td className="px-5 py-3 text-lagoon-600">{tour.availableSlots}/{tour.maxTravelers}</td>
+                <td className="px-5 py-3 text-lagoon-600">
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    tour.bookingType === 'flexible' ? 'bg-sky-100 text-sky-700' : 'bg-lagoon-100 text-lagoon-700'
+                  }`}>
+                    {tour.bookingType === 'flexible' ? 'Any day' : 'Fixed dates'}
+                  </span>
+                </td>
+                <td className="px-5 py-3 text-lagoon-600">{renderCapacity(tour)}</td>
                 <td className="px-5 py-3 text-lagoon-600">{tour.rating || '—'}</td>
                 <td className="px-5 py-3">
                   <div className="flex justify-end gap-2">
@@ -189,7 +214,7 @@ function ToursTab() {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-8 text-center text-lagoon-400">No tours match your search.</td>
+                <td colSpan={7} className="px-5 py-8 text-center text-lagoon-400">No tours match your search.</td>
               </tr>
             )}
           </tbody>

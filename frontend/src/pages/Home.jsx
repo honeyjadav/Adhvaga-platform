@@ -35,46 +35,46 @@ export default function Home() {
         <img
           src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1800&auto=format&fit=crop"
           alt="Mountain valley at sunrise"
-          className="absolute inset-0 h-full w-full object-cover opacity-40"
+          className="absolute inset-0 h-full w-full object-cover opacity-80"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-lagoon-900 via-lagoon-900/70 to-lagoon-900/30" />
-        <div className="relative mx-auto max-w-5xl px-4 py-24 text-center sm:px-6 sm:py-32 lg:px-8">
-          <p className="section-label text-sand-200/80">Adhvaga Tours</p>
-          <h1 className="mt-4 font-display text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
-            Plan less. Wander more.
-          </h1>
-          <p className="mx-auto mt-5 max-w-xl text-base text-sand-100/90 sm:text-lg">
-            Handpicked tours across India&apos;s mountains, coastlines, and cities — booked in minutes, remembered for years.
-          </p>
+       <div className="relative mx-auto max-w-5xl px-4 py-24 text-center sm:px-6 sm:py-32 lg:px-8">
+  <p className="section-label text-sand-200/80 tracking-[0.3em]">Est. for the modern wanderer</p>
+  <h1 className="mt-4 font-display text-5xl font-bold leading-tight text-white sm:text-6xl lg:text-7xl">
+    Adhvaga <span className="text-sand-200">Tours &amp; Travels</span>
+  </h1>
+  <p className="mx-auto mt-6 max-w-xl text-base text-sand-100/90 sm:text-lg">
+    Handpicked tours across India&apos;s mountains, coastlines, and cities — booked in minutes, remembered for years.
+  </p>
 
-          <form
-            onSubmit={handleSearch}
-            className="mx-auto mt-10 flex max-w-2xl flex-col gap-3 rounded-2xl bg-white p-3 shadow-soft sm:flex-row sm:items-center"
-          >
-            <div className="flex flex-1 items-center gap-2 px-3 py-2">
-              <MapPin size={18} className="shrink-0 text-lagoon-400" />
-              <input
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-                placeholder="Where do you want to go?"
-                className="w-full border-none bg-transparent text-sm text-lagoon-900 placeholder:text-lagoon-400 focus:outline-none"
-              />
-            </div>
-            <div className="hidden h-8 w-px bg-sand-200 sm:block" />
-            <div className="flex flex-1 items-center gap-2 px-3 py-2">
-              <CalendarDays size={18} className="shrink-0 text-lagoon-400" />
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full border-none bg-transparent text-sm text-lagoon-900 focus:outline-none"
-              />
-            </div>
-            <button type="submit" className="btn-primary shrink-0">
-              <Search size={16} /> Search Tours
-            </button>
-          </form>
-        </div>
+  <form
+    onSubmit={handleSearch}
+    className="mx-auto mt-10 flex max-w-2xl flex-col gap-3 rounded-2xl bg-white p-3 shadow-soft sm:flex-row sm:items-center"
+  >
+    <div className="flex flex-1 items-center gap-2 px-3 py-2">
+      <MapPin size={18} className="shrink-0 text-lagoon-400" />
+      <input
+        value={destination}
+        onChange={(e) => setDestination(e.target.value)}
+        placeholder="Where do you want to go?"
+        className="w-full border-none bg-transparent text-sm text-lagoon-900 placeholder:text-lagoon-400 focus:outline-none"
+      />
+    </div>
+    <div className="hidden h-8 w-px bg-sand-200 sm:block" />
+    <div className="flex flex-1 items-center gap-2 px-3 py-2">
+      <CalendarDays size={18} className="shrink-0 text-lagoon-400" />
+      <input
+        type="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+        className="w-full border-none bg-transparent text-sm text-lagoon-900 focus:outline-none"
+      />
+    </div>
+    <button type="submit" className="btn-primary shrink-0">
+      <Search size={16} /> Search Tours
+    </button>
+  </form>
+</div>
       </section>
 
       {/* Highlights */}

@@ -1,19 +1,25 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState , useEffect } from 'react';
 import ReviewForm from '../components/reviews/ReviewForm.jsx';
 import ReviewList from '../components/reviews/ReviewList.jsx';
 import LoadingSpinner from '../components/common/LoadingSpinner.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { getReviewsByTour } from '../services/reviews.js';
-import { TOURS } from '../data/mockData.js';
+import { getTours } from '../services/tours.js';
 
 export default function ReviewsPage() {
-  const [tourId, setTourId] = useState(TOURS[0]?.id);
-  const { data: reviews, isLoading, setData } = useFetch(() => getReviewsByTour(tourId), [tourId]);
+  const { data: tours } = useFetch(() => getTours(), []);
+  const [tourId, setTourId] = useState(null);
+  const { data: reviews, isLoading, setData } = useFetch(
+  () => (tourId ? getReviewsByTour(tourId) : Promise.resolve([])),
+  [tourId]
+);
 
-  const selectedTour = useMemo(() => TOURS.find((t) => t.id === tourId), [tourId]);
+  const selectedTour = useMemo(() => tours?.find((t) => t.id === tourId), [tours, tourId]);
 
   const handleReviewAdded = (review) => setData((prev) => [review, ...(prev || [])]);
-
+  useEffect(() => {
+  if (tours?.length && !tourId) setTourId(tours[0].id);
+}, [tours, tourId]);
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
       <p className="section-label">Traveler feedback</p>
@@ -23,7 +29,7 @@ export default function ReviewsPage() {
       <div className="mt-6">
         <label className="mb-1.5 block text-sm font-medium text-lagoon-700">Select a tour</label>
         <select value={tourId} onChange={(e) => setTourId(e.target.value)} className="input-field max-w-sm">
-          {TOURS.map((t) => (
+          {tours?.map((t) => (
             <option key={t.id} value={t.id}>{t.title}</option>
           ))}
         </select>

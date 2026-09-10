@@ -1,9 +1,6 @@
 import api from './api';
 import { APIs } from '../constants/APIConstants';
 
-// One place for every raw API call the app makes. Domain service files
-// (auth.js, tours.js, etc.) call into this rather than hitting `api`
-// directly, and handle mock-vs-real switching on top of it.
 class APICallService {
   // ---- Auth ----
   login(formData) {
@@ -44,8 +41,6 @@ class APICallService {
   }
 
   changePassword(formData) {
-    // formData: { currentPassword, newPassword }
-    // NOTE: backend route is PUT, not PATCH — matching that here.
     return api.put(APIs.CHANGE_PASSWORD, formData);
   }
 
@@ -58,8 +53,82 @@ class APICallService {
   }
 
   updateProfile(formData) {
-    // formData: { name, phone } — backend route is PUT, not PATCH.
     return api.put(APIs.UPDATE_PROFILE, formData);
+  }
+
+  // ---- Tours ----
+  getTours(params) {
+    return api.get(APIs.TOURS, { params });
+  }
+
+  getFeaturedTours() {
+    return api.get(APIs.FEATURED_TOURS);
+  }
+
+  getTourById(id) {
+    return api.get(APIs.TOUR_BY_ID(id));
+  }
+
+  getTourAvailability(id, params) {
+    return api.get(APIs.TOUR_AVAILABILITY(id), { params });
+  }
+
+  createTour(payload) {
+    return api.post(APIs.TOURS, payload);
+  }
+
+  updateTour(id, payload) {
+    return api.put(APIs.TOUR_BY_ID(id), payload);
+  }
+
+  deleteTour(id) {
+    return api.delete(APIs.TOUR_BY_ID(id));
+  }
+
+  // ---- Bookings ----
+  getMyBookings() {
+    return api.get(APIs.MY_BOOKINGS);
+  }
+
+  getAllBookings() {
+    return api.get(APIs.BOOKINGS);
+  }
+
+  createBooking(payload) {
+    return api.post(APIs.BOOKINGS, payload);
+  }
+
+  updateBookingStatus(id, status) {
+    return api.patch(APIs.BOOKING_STATUS(id), { status });
+  }
+
+  // ---- Reviews ----
+  getReviewsByTour(tourId) {
+    return api.get(APIs.REVIEWS, { params: { tourId } });
+  }
+
+  createReview(payload) {
+    return api.post(APIs.REVIEWS, payload);
+  }
+
+  // ---- Payments ----
+  createPaymentIntent(payload) {
+    return api.post(APIs.CREATE_PAYMENT_INTENT, payload);
+  }
+
+  confirmPayment(payload) {
+    return api.post(APIs.CONFIRM_PAYMENT, payload);
+  }
+
+   uploadImage(formData) {
+    return api.post(APIs.UPLOAD_IMAGE, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  }
+
+    // ---- Admin ----
+  getDashboardStats() {
+    return api.get(APIs.ADMIN_STATS);
   }
 }
 

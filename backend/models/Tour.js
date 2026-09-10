@@ -25,7 +25,26 @@ const tourSchema = new mongoose.Schema(
     destination: { type: String, required: true, trim: true },
     price: { type: Number, required: true, min: 0 },
     duration: { type: Number, required: true, min: 1 },
+
+    // Determines which booking flow applies to this tour.
+    // 'fixed'    -> operator-defined departures[] with shared capacity per date
+    // 'flexible' -> user picks any date; capacity checked against dailyCapacity
+    bookingType: {
+      type: String,
+      enum: ['fixed', 'flexible'],
+      required: true,
+      default: 'fixed',
+    },
+
+    // --- Fixed-departure fields (used when bookingType === 'fixed') ---
     departures: { type: [departureSchema], default: [] },
+
+    // --- Flexible-booking fields (used when bookingType === 'flexible') ---
+    dailyCapacity: { type: Number, min: 1 },
+    availableFrom: { type: Date },
+    availableUntil: { type: Date },
+    blackoutDates: { type: [Date], default: [] },
+
     heroImage: { type: String, required: true, trim: true },
     gallery: { type: [String], default: [] },
     summary: { type: String, required: true, trim: true },
@@ -38,6 +57,21 @@ const tourSchema = new mongoose.Schema(
 
 tourSchema.virtual('id').get(function getId() {
   return this._id.toString();
+});
+
+// Guard against saving a tour with the wrong fields for its bookingType.
+tourSchema.pre('validate', function validateBookingTypeFields(next) {
+  if (this.bookingType === 'fixed') {
+    if (!this.departures || this.departures.length === 0) {
+      return next(new Error('Fixed tours require at least one departure date'));
+    }
+  }
+  if (this.bookingType === 'flexible') {
+    if (!this.dailyCapacity || this.dailyCapacity < 1) {
+      return next(new Error('Flexible tours require a dailyCapacity of at least 1'));
+    }
+  }
+  next();
 });
 
 module.exports = mongoose.model('Tour', tourSchema);

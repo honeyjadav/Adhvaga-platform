@@ -10,6 +10,8 @@ const tourRoutes = require('./routes/tourRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
+const adminRoutes = require('./routes/adminRoutes')
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '1.1.1.1']);
@@ -42,7 +44,8 @@ app.use('/api/tours', tourRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
-
+app.use('/api/upload', uploadRoutes);
+app.use('/api/admin', adminRoutes);
 // 404 + error handling (must be last)
 app.use(notFound);
 app.use(errorHandler);

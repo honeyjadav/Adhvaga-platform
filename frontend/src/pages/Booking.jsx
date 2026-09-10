@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Users, CalendarDays, MessageSquare } from 'lucide-react';
 import BookingSummary from '../components/booking/BookingSummary.jsx';
@@ -8,7 +8,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner.jsx';
 import ErrorState from '../components/common/ErrorState.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { getTourById } from '../services/tours.js';
-import { bookingSchema } from '../utils/validationSchemas.js';
+import { fixedBookingSchema, flexibleBookingSchema } from '../utils/validationSchemas.js';
 import { useAuth } from '../hooks/useAuth.js';
 
 export default function Booking() {
@@ -18,16 +18,18 @@ export default function Booking() {
   const { user } = useAuth();
   const { data: tour, isLoading, error, reload } = useFetch(() => getTourById(id), [id]);
 
+  const isFlexible = tour?.bookingType === 'flexible';
+
   const {
     register,
-    control,
     handleSubmit,
     watch,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(bookingSchema),
+    resolver: zodResolver(isFlexible ? flexibleBookingSchema : fixedBookingSchema),
     defaultValues: {
-      startDate: searchParams.get('date') || '',
+      departureId: searchParams.get('departureId') || '',
+      date: searchParams.get('date') || '',
       travelers: 1,
       fullName: user?.name || '',
       email: user?.email || '',
@@ -37,7 +39,8 @@ export default function Booking() {
   });
 
   const travelers = watch('travelers') || 1;
-  const startDate = watch('startDate');
+  const selectedDeparture = tour?.departures?.find((d) => d._id === watch('departureId') || d.id === watch('departureId'));
+  const startDate = isFlexible ? watch('date') : selectedDeparture?.date;
 
   if (isLoading) return <LoadingSpinner fullPage label="Preparing booking form..." />;
   if (error) return <div className="mx-auto max-w-3xl px-4 py-16"><ErrorState message={error} onRetry={reload} /></div>;
@@ -46,7 +49,7 @@ export default function Booking() {
   const onSubmit = (values) => {
     // Carry booking details forward to the payment step via router state,
     // where the actual booking + payment intent are created.
-    navigate(`/payment/${tour.id}`, { state: { ...values, tourId: tour.id } });
+    navigate(`/payment/${tour.id}`, { state: { ...values, tourId: tour.id, bookingType: tour.bookingType } });
   };
 
   return (
@@ -58,30 +61,49 @@ export default function Booking() {
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
         <form onSubmit={handleSubmit(onSubmit)} className="card space-y-6 p-6 lg:col-span-2">
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-lagoon-700">
-                <CalendarDays size={14} className="mr-1 inline" /> Start date
-              </label>
-              <input type="date" className="input-field" {...register('startDate')} />
-              {errors.startDate && <p className="field-error">{errors.startDate.message}</p>}
-            </div>
+            {isFlexible ? (
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-lagoon-700">
+                  <CalendarDays size={14} className="mr-1 inline" /> Choose a date
+                </label>
+                <input
+                  type="date"
+                  className="input-field"
+                  min={tour.availableFrom ? new Date(tour.availableFrom).toISOString().split('T')[0] : undefined}
+                  max={tour.availableUntil ? new Date(tour.availableUntil).toISOString().split('T')[0] : undefined}
+                  {...register('date')}
+                />
+                {errors.date && <p className="field-error">{errors.date.message}</p>}
+              </div>
+            ) : (
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-lagoon-700">
+                  <CalendarDays size={14} className="mr-1 inline" /> Departure date
+                </label>
+                <select className="input-field" {...register('departureId')}>
+                  <option value="">Select a departure date</option>
+                  {tour.departures?.map((d) => (
+                    <option key={d._id || d.id} value={d._id || d.id} disabled={d.availableSlots === 0}>
+                      {new Date(d.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {' — '}
+                      {d.availableSlots === 0 ? 'Sold out' : `${d.availableSlots} slots left`}
+                    </option>
+                  ))}
+                </select>
+                {errors.departureId && <p className="field-error">{errors.departureId.message}</p>}
+              </div>
+            )}
+
             <div>
               <label className="mb-1.5 block text-sm font-medium text-lagoon-700">
                 <Users size={14} className="mr-1 inline" /> Number of travelers
               </label>
-              <Controller
-                name="travelers"
-                control={control}
-                render={({ field }) => (
-                  <input
-                    type="number"
-                    min={1}
-                    max={tour.maxTravelers}
-                    className="input-field"
-                    value={field.value}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                )}
+              <input
+                type="number"
+                min={1}
+                max={isFlexible ? tour.dailyCapacity : selectedDeparture?.maxTravelers || 20}
+                className="input-field"
+                {...register('travelers', { valueAsNumber: true })}
               />
               {errors.travelers && <p className="field-error">{errors.travelers.message}</p>}
             </div>

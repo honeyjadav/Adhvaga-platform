@@ -5,6 +5,7 @@ import { ImagePlus, Plus, Trash2 } from 'lucide-react';
 import Modal from '../common/Modal.jsx';
 import { tourFormSchema } from '../../utils/validationSchemas.js';
 import { CATEGORIES } from '../../data/mockData.js';
+import { uploadImage } from '../../services/uploads.js';
 
 const EMPTY_VALUES = {
   title: '',
@@ -12,11 +13,13 @@ const EMPTY_VALUES = {
   destination: '',
   price: '',
   duration: '',
-  maxTravelers: '',
-  availableSlots: '',
   summary: '',
   heroImage: '',
-  departures: [{ date: '', maxTravelers: '' }],
+  bookingType: 'fixed',
+  departures: [{ date: '', maxTravelers: 0 }],
+  dailyCapacity: 0,
+  availableFrom: '',
+  availableUntil: '',
 };
 
 export default function TourFormModal({ isOpen, onClose, onSubmit, initialTour, submitting }) {
@@ -29,6 +32,7 @@ export default function TourFormModal({ isOpen, onClose, onSubmit, initialTour, 
     watch,
     formState: { errors },
     control,
+    setValue,
   } = useForm({
     resolver: zodResolver(tourFormSchema),
     defaultValues: EMPTY_VALUES,
@@ -40,6 +44,7 @@ export default function TourFormModal({ isOpen, onClose, onSubmit, initialTour, 
   });
 
   const heroImageValue = watch('heroImage');
+  const bookingType = watch('bookingType');
 
   useEffect(() => {
     if (isOpen) {
@@ -51,16 +56,23 @@ export default function TourFormModal({ isOpen, onClose, onSubmit, initialTour, 
               destination: initialTour.destination,
               price: initialTour.price,
               duration: initialTour.duration,
-              maxTravelers: initialTour.maxTravelers,
-              availableSlots: initialTour.availableSlots,
               summary: initialTour.summary,
               heroImage: initialTour.heroImage,
-              departures: initialTour.departures && initialTour.departures.length > 0
-                ? initialTour.departures.map((d) => ({
-                    date: d.date ? new Date(d.date).toISOString().split('T')[0] : '',
-                    maxTravelers: d.maxTravelers || '',
-                  }))
-                : [{ date: '', maxTravelers: '' }],
+              bookingType: initialTour.bookingType || 'fixed',
+              departures:
+                initialTour.departures && initialTour.departures.length > 0
+                  ? initialTour.departures.map((d) => ({
+                      date: d.date ? new Date(d.date).toISOString().split('T')[0] : '',
+                      maxTravelers: d.maxTravelers || 0,
+                    }))
+                  : [{ date: '', maxTravelers: 0 }],
+              dailyCapacity: initialTour.dailyCapacity || 0,
+              availableFrom: initialTour.availableFrom
+                ? new Date(initialTour.availableFrom).toISOString().split('T')[0]
+                : '',
+              availableUntil: initialTour.availableUntil
+                ? new Date(initialTour.availableUntil).toISOString().split('T')[0]
+                : '',
             }
           : EMPTY_VALUES
       );
@@ -74,28 +86,49 @@ export default function TourFormModal({ isOpen, onClose, onSubmit, initialTour, 
 
   // Simulates an image upload: in production this would POST to a
   // storage endpoint (S3, Cloudinary, etc.) and receive back a URL.
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const localUrl = URL.createObjectURL(file);
-    setPreview(localUrl);
-  };
+  const handleFileChange = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const localPreview = URL.createObjectURL(file);
+  setPreview(localPreview); // instant preview while uploading
+
+  try {
+    const { url } = await uploadImage(file);
+    setPreview(url); // replace blob preview with the real hosted URL
+    setValue('heroImage', url);
+  } catch (err) {
+    console.error('Image upload failed', err);
+  }
+};
 
   const submitHandler = (values) => {
-    onSubmit({
-      ...values,
+    const payload = {
+      title: values.title,
+      category: values.category,
+      destination: values.destination,
       price: Number(values.price),
       duration: Number(values.duration),
-      maxTravelers: Number(values.maxTravelers),
-      availableSlots: Number(values.availableSlots),
+      summary: values.summary,
       heroImage: preview || values.heroImage,
-      departures: values.departures.map((d) => ({
+      bookingType: values.bookingType,
+    };
+
+    if (values.bookingType === 'fixed') {
+      payload.departures = values.departures.map((d) => ({
         date: new Date(d.date).toISOString(),
         maxTravelers: Number(d.maxTravelers),
-      })),
-    });
-  };
+        availableSlots: Number(d.maxTravelers),
+      }));
+    } else {
+      payload.dailyCapacity = Number(values.dailyCapacity);
+      if (values.availableFrom) payload.availableFrom = new Date(values.availableFrom).toISOString();
+      if (values.availableUntil) payload.availableUntil = new Date(values.availableUntil).toISOString();
+    }
 
+    onSubmit(payload);
+  };
+console.log('form errors:', errors);
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={initialTour ? 'Edit Tour Package' : 'Add Tour Package'} maxWidth="max-w-2xl">
       <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
@@ -134,18 +167,6 @@ export default function TourFormModal({ isOpen, onClose, onSubmit, initialTour, 
             {errors.duration && <p className="field-error">{errors.duration.message}</p>}
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-lagoon-700">Max travelers</label>
-            <input type="number" className="input-field" {...register('maxTravelers', { valueAsNumber: true })} />
-            {errors.maxTravelers && <p className="field-error">{errors.maxTravelers.message}</p>}
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-lagoon-700">Available slots</label>
-            <input type="number" className="input-field" {...register('availableSlots', { valueAsNumber: true })} />
-            {errors.availableSlots && <p className="field-error">{errors.availableSlots.message}</p>}
-          </div>
-
           <div className="sm:col-span-2">
             <label className="mb-1.5 block text-sm font-medium text-lagoon-700">Summary</label>
             <textarea rows={3} className="input-field resize-none" {...register('summary')} />
@@ -153,52 +174,80 @@ export default function TourFormModal({ isOpen, onClose, onSubmit, initialTour, 
           </div>
 
           <div className="sm:col-span-2">
-            <label className="mb-1.5 block text-sm font-medium text-lagoon-700">Departure Dates (for group travel)</label>
-            {errors.departures && <p className="field-error mb-2">{errors.departures.message}</p>}
-            <div className="space-y-3">
-              {fields.map((field, index) => (
-                <div key={field.id} className="flex gap-3">
-                  <div className="flex-1">
-                    <input
-                      type="date"
-                      className="input-field"
-                      {...register(`departures.${index}.date`)}
-                    />
-                    {errors.departures?.[index]?.date && (
-                      <p className="field-error text-xs">{errors.departures[index].date.message}</p>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      type="number"
-                      placeholder="Max travelers"
-                      className="input-field"
-                      {...register(`departures.${index}.maxTravelers`, { valueAsNumber: true })}
-                    />
-                    {errors.departures?.[index]?.maxTravelers && (
-                      <p className="field-error text-xs">{errors.departures[index].maxTravelers.message}</p>
-                    )}
-                  </div>
-                  {fields.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => remove(index)}
-                      className="mt-0.5 rounded-lg bg-red-50 p-2.5 text-red-600 hover:bg-red-100 transition"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => append({ date: '', maxTravelers: '' })}
-                className="inline-flex items-center gap-2 rounded-lg border border-lagoon-300 px-3 py-2 text-sm font-medium text-lagoon-600 hover:bg-lagoon-50 transition"
-              >
-                <Plus size={16} /> Add Departure
-              </button>
+            <label className="mb-1.5 block text-sm font-medium text-lagoon-700">How does this tour run?</label>
+            <div className="flex gap-3">
+              <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-sand-200 px-4 py-3 text-sm font-medium text-lagoon-700 has-[:checked]:border-lagoon-600 has-[:checked]:bg-lagoon-50">
+                <input type="radio" value="fixed" className="accent-lagoon-600" {...register('bookingType')} />
+                Fixed group departures
+              </label>
+              <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-sand-200 px-4 py-3 text-sm font-medium text-lagoon-700 has-[:checked]:border-lagoon-600 has-[:checked]:bg-lagoon-50">
+                <input type="radio" value="flexible" className="accent-lagoon-600" {...register('bookingType')} />
+                Any day (daily capacity)
+              </label>
             </div>
           </div>
+
+          {bookingType === 'fixed' ? (
+            <div className="sm:col-span-2">
+              <label className="mb-1.5 block text-sm font-medium text-lagoon-700">Departure Dates (for group travel)</label>
+              {errors.departures && <p className="field-error mb-2">{errors.departures.message}</p>}
+              <div className="space-y-3">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="flex gap-3">
+                    <div className="flex-1">
+                      <input type="date" className="input-field" {...register(`departures.${index}.date`)} />
+                      {errors.departures?.[index]?.date && (
+                        <p className="field-error text-xs">{errors.departures[index].date.message}</p>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        placeholder="Max travelers"
+                        className="input-field"
+                        {...register(`departures.${index}.maxTravelers`, { valueAsNumber: true })}
+                      />
+                      {errors.departures?.[index]?.maxTravelers && (
+                        <p className="field-error text-xs">{errors.departures[index].maxTravelers.message}</p>
+                      )}
+                    </div>
+                    {fields.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => remove(index)}
+                        className="mt-0.5 rounded-lg bg-red-50 p-2.5 text-red-600 hover:bg-red-100 transition"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => append({ date: '', maxTravelers: '' })}
+                  className="inline-flex items-center gap-2 rounded-lg border border-lagoon-300 px-3 py-2 text-sm font-medium text-lagoon-600 hover:bg-lagoon-50 transition"
+                >
+                  <Plus size={16} /> Add Departure
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-lagoon-700">Daily capacity</label>
+                <input type="number" className="input-field" {...register('dailyCapacity', { valueAsNumber: true })} />
+                {errors.dailyCapacity && <p className="field-error">{errors.dailyCapacity.message}</p>}
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-lagoon-700">Available from (optional)</label>
+                <input type="date" className="input-field" {...register('availableFrom')} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-lagoon-700">Available until (optional)</label>
+                <input type="date" className="input-field" {...register('availableUntil')} />
+              </div>
+            </>
+          )}
 
           <div className="sm:col-span-2">
             <label className="mb-1.5 block text-sm font-medium text-lagoon-700">Cover image</label>

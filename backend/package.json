@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
@@ -20,6 +21,7 @@
     "mongodb": "^7.6.0",
     "mongoose": "^8.5.0",
     "morgan": "^1.10.0",
+    "multer": "^2.3.0",
     "nodemailer": "^6.9.14"
   },
   "devDependencies": {
