@@ -111,6 +111,10 @@ class APICallService {
     return api.post(APIs.REVIEWS, payload);
   }
 
+  deleteReview(id) {
+    return api.delete(APIs.REVIEW_BY_ID(id));
+  }
+
   // ---- Payments ----
   createPaymentIntent(payload) {
     return api.post(APIs.CREATE_PAYMENT_INTENT, payload);

@@ -22,6 +22,7 @@ export const APIs = {
 
   // Reviews
   REVIEWS: '/reviews',
+  REVIEW_BY_ID: (id) => `/reviews/${id}`,
 
   // Payments
   CREATE_PAYMENT_INTENT: '/payments/create-intent',

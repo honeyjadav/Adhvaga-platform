@@ -32,20 +32,8 @@ const createReview = asyncHandler(async (req, res) => {
 });
 
 const deleteReview = asyncHandler(async (req, res) => {
-  const review = await Review.findById(req.params.id);
+  const review = await Review.findByIdAndDelete(req.params.id);
   if (!review) throw new ApiError(404, 'Review not found');
-  if (review.user.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, 'You are not authorized to delete this review');
-  }
-  await review.remove();
-  const aggregate = await Review.aggregate([
-    { $match: { tour: review.tour } },
-    { $group: { _id: null, rating: { $avg: '$rating' }, reviewCount: { $sum: 1 } } },
-  ]);
-  await Tour.findByIdAndUpdate(review.tour, {
-    rating: Math.round((aggregate[0]?.rating || 0) * 10) / 10,
-    reviewCount: aggregate[0]?.reviewCount || 0,
-  });
   res.json({ message: 'Review deleted successfully' });
 });
 
