@@ -38,7 +38,7 @@ export default function ReviewForm({ tourId, onReviewAdded }) {
         tourId,
         userName: user.name,
         rating: values.rating,
-        comment: values.comment,
+        comment: values.comment || '',
       });
       success('Thanks! Your review has been posted.');
       reset({ rating: 0, comment: '' });

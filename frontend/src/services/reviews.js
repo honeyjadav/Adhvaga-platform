@@ -9,3 +9,8 @@ export async function createReview({ tourId, rating, comment }) {
   const { data } = await APICallService.createReview({ tourId, rating, comment });
   return data;
 }
+
+export async function deleteReview(reviewId) {
+  const { data } = await APICallService.deleteReview(reviewId);
+  return data;
+}

@@ -1,8 +1,10 @@
 import React from 'react';
 import StarRating from './StarRating.jsx';
 import { formatDate } from '../../utils/formatters.js';
-
-export default function ReviewList({ reviews = [] }) {
+import {deleteReview} from '../../services/reviews.js';
+import { useToast } from '../../context/ToastContext.jsx';
+export default function ReviewList({reviews}) {
+  const { success, error: toastError } = useToast();
   if (!reviews.length) {
     return (
       <div className="card p-6 text-center text-sm text-lagoon-400">
@@ -11,6 +13,14 @@ export default function ReviewList({ reviews = [] }) {
     );
   }
 
+ const handleDeleteReview = async (reviewId) => {
+    try {
+      await deleteReview(reviewId);
+      success('Review deleted successfully.');
+    } catch (err) {
+      toastError(err.message || 'Could not delete the review.');
+    }
+  };
   return (
     <div className="space-y-4">
       {reviews.map((review) => (
@@ -28,6 +38,16 @@ export default function ReviewList({ reviews = [] }) {
             <StarRating value={review.rating} readOnly size={15} />
           </div>
           <p className="mt-3 text-sm leading-relaxed text-lagoon-600">{review.comment}</p>
+          <div>
+            <button
+              className="mt-3 text-sm font-medium text-lagoon-500 hover:text-lagoon-700"
+              onClick={() => {
+                handleDeleteReview(review.id);
+              }}
+            >
+              Delete
+            </button>
+          </div>
         </div>
       ))}
     </div>
