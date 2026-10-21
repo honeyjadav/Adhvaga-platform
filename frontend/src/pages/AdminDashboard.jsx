@@ -18,7 +18,7 @@ import Modal from '../components/common/Modal.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { useToast } from '../context/ToastContext.jsx';
 import * as toursService from '../services/tours.js';
-import * as bookingsService from '../services/bookings.js';
+import * as bookingsService from '../services/Bookings.js';
 import { getDashboardStats } from '../services/admin.js';
 import { formatCurrency, formatDate, STATUS_BADGE_STYLES, capitalize } from '../utils/formatters.js';
 
